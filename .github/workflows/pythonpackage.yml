@@ -5,13 +5,14 @@ name: Python package
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - '*'
   pull_request:
-    branches: [ master ]
+    branches:
+      - '*'
 
 jobs:
-  test:
-
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -19,21 +20,61 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+#    - name: Set up Python ${{ matrix.python-version }}
+#      uses: actions/setup-python@v1
+#      with:
+#        python-version: ${{ matrix.python-version }}
+#    - name: Set up Node
+#      uses: actions/setup-node@v1
+#      with:
+#        node-version: '12.x'
+#    - name: Install dependencies
+#      run: |
+#        npm install -g grunt-cli bower xo
+#        npm install --quiet
+#        bower install
+#        pip install --upgrade pip tox babel mako crowdin-cli-py
+#    - name: Test with XO
+#      run: xo
+#    - name: Test with tox
+#      run: tox -v --recreate -e "py27-{flake8,linux}"
+    - name: Set up Docker Buildx
+      if: success()
+      id: buildx
+      uses: crazy-max/ghaction-docker-buildx@v1
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Set up Node
-      uses: actions/setup-node@v1
-      with:
-        node-version: '12.x'
-    - name: Install dependencies
+        version: latest
+    - name: Available platforms
+      if: success()
+      run: echo ${{ steps.buildx.outputs.platforms }}
+    - name: Prepare
+      if: success()
+      id: prepare
       run: |
-        npm install -g grunt-cli bower xo
-        npm install --quiet
-        bower install
-        pip install --upgrade pip tox babel mako crowdin-cli-py
-    - name: Test with tox
+        echo ::set-output name=docker_platforms::linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x
+        echo ::set-output name=docker_username::miigotu
+        echo ::set-output name=docker_image::miigotu/${{ github.event.repository.name }}
+        echo ::set-output name=version::${GITHUB_REF#refs/*/}
+    - name: Docker Login
+      if: success()
+      env:
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       run: |
-        xo
-        tox -v --recreate -e "py27-{flake8,linux}"
+        echo "${DOCKER_PASSWORD}" | docker login --username "${{ steps.prepare.outputs.docker_username }}" --password-stdin index.docker.io
+    - name: Run Buildx (master)
+      if: success() && contains(steps.prepare.outputs.version, 'master')
+      run: |
+        docker buildx build \
+          --output "type=image,push=true" \
+          --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+          --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
+          --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
+          --file Dockerfile .
+    - name: Run Buildx (non-master)
+      if: success() && !contains(steps.prepare.outputs.version, 'master')
+      run: |
+        docker buildx build \
+          --output "type=image,push=true" \
+          --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+          --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
+          --file Dockerfile .
