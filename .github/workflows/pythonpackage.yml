@@ -63,7 +63,7 @@ jobs:
       run: |
         npm install xo
         npm install --quiet
-        pip install --upgrade pip tox babel mako crowdin-cli-py
+        pip install --upgrade pip tox babel crowdin-cli-py
     - name: Get tox workdir
       id: tox-workdir-path
       run: echo "::set-output name=dir::$(tox --showconfig | grep -Po '(?<=^toxworkdir = ).*$')"
