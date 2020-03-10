@@ -57,6 +57,12 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        npm install -g grunt-cli bower xo
+        npm install --quiet
+        bower install
+        pip install --upgrade pip tox babel mako crowdin-cli-py
     - name: Get tox workdir
       id: tox-workdir-path
       run: echo "::set-output name=dir::$(tox --showconfig | grep -Po '(?<=^toxworkdir = ).*$')"
@@ -67,12 +73,6 @@ jobs:
         key: ${{ runner.os }}-tox-${{ hashFiles('**/tox.ini') }}
         restore-keys: |
           ${{ runner.os }}-tox-
-    - name: Install dependencies
-      run: |
-        npm install -g grunt-cli bower xo
-        npm install --quiet
-        bower install
-        pip install --upgrade pip tox babel mako crowdin-cli-py
     - name: Test with XO
       run: xo
     - name: Test with tox
