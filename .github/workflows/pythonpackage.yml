@@ -12,32 +12,75 @@ on:
       - '*'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
     strategy:
       matrix:
         python-version: [2.7]
-
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-#    - name: Set up Python ${{ matrix.python-version }}
-#      uses: actions/setup-python@v1
-#      with:
-#        python-version: ${{ matrix.python-version }}
-#    - name: Set up Node
-#      uses: actions/setup-node@v1
-#      with:
-#        node-version: '12.x'
-#    - name: Install dependencies
-#      run: |
-#        npm install -g grunt-cli bower xo
-#        npm install --quiet
-#        bower install
-#        pip install --upgrade pip tox babel mako crowdin-cli-py
-#    - name: Test with XO
-#      run: xo
-#    - name: Test with tox
-#      run: tox -v --recreate -e "py27-{flake8,linux}"
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - name: Determine npm cache directory
+      id: npm-cache
+      run: |
+        echo "::set-output name=dir::$(npm config get cache)"
+    - name: Restore npm cache
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.npm-cache.outputs.dir }}
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+    - name: Restore yarn cache
+      uses: actions/cache@v1
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+    - name: Restore pip cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Get tox workdir
+      id: tox-workdir-path
+      run: echo "::set-output name=dir::$(tox --showconfig | grep -Po '(?<=^toxworkdir = ).*$')"
+    - name: Restore tox workdir
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.tox-workdir-path.outputs.dir }}
+        key: ${{ runner.os }}-tox-${{ hashFiles('**/tox.ini') }}
+        restore-keys: |
+          ${{ runner.os }}-tox-
+    - name: Install dependencies
+      run: |
+        npm install -g grunt-cli bower xo
+        npm install --quiet
+        bower install
+        pip install --upgrade pip tox babel mako crowdin-cli-py
+    - name: Test with XO
+      run: xo
+    - name: Test with tox
+      run: tox -v --recreate -e "py27-{flake8,linux}"
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
     - name: Set up Docker Buildx
       if: success()
       id: buildx
