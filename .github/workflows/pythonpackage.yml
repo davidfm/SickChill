@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -64,7 +64,8 @@ jobs:
         pip install --upgrade pip tox babel crowdin-cli-py
     - name: Get tox workdir
       id: tox-workdir-path
-      run: echo "::set-output name=dir::$(tox --showconfig | grep -Po '(?<=^toxworkdir = ).*$')"
+      run: echo "::set-output name=dir::$(tox --showconfig | grep '^toxworkdir = .*$' | tail -c+14)"
+      ${GITHUB_REF#refs/*/}
     - name: Restore tox workdir
       uses: actions/cache@v1
       with:
