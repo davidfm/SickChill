@@ -65,7 +65,6 @@ jobs:
     - name: Get tox workdir
       id: tox-workdir-path
       run: echo "::set-output name=dir::$(tox --showconfig | grep '^toxworkdir = .*$' | tail -c+14)"
-      ${GITHUB_REF#refs/*/}
     - name: Restore tox workdir
       uses: actions/cache@v1
       with:
