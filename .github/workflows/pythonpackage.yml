@@ -30,6 +30,10 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '12.x'
+    - name: windows build tools
+      if: contains(matrix.os, 'windows-latest')
+      run |
+        npm install -g windows-build-tools
     - name: Determine npm cache directory
       id: npm-cache
       run: |
