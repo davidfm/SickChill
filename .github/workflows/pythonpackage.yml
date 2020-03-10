@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: ubuntu-latest
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -73,10 +73,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-tox-
     - name: Install xo
-      if: contains(matrix.os, 'ubuntu-latest')
       run: npm install -g xo
     - name: Test with XO
-      if: contains(matrix.os, 'ubuntu-latest')
       run: xo
     - name: Test with tox
       run: tox -v --recreate -e "py27-{flake8,linux}"
