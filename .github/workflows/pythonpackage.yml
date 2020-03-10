@@ -16,7 +16,6 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7]
-#        os: [ubuntu-latest, windows-latest, macOS-latest]  # Problem with macos because of grep
         os: [ubuntu-latest, windows-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -30,10 +29,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-    - name: windows build tools
-      if: contains(matrix.os, 'windows-latest')
-      run: |
-        npm install -g windows-build-tools
     - name: Determine npm cache directory
       id: npm-cache
       run: |
@@ -65,7 +60,6 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        npm install -g xo
         npm install --quiet
         pip install --upgrade pip tox babel crowdin-cli-py
     - name: Get tox workdir
@@ -78,7 +72,11 @@ jobs:
         key: ${{ runner.os }}-tox-${{ hashFiles('**/tox.ini') }}
         restore-keys: |
           ${{ runner.os }}-tox-
+    - name: Install xo
+      if: contains(matrix.os, 'ubuntu-latest')
+      run: npm install -g xo
     - name: Test with XO
+      if: contains(matrix.os, 'ubuntu-latest')
       run: xo
     - name: Test with tox
       run: tox -v --recreate -e "py27-{flake8,linux}"
