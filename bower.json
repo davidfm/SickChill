@@ -23,7 +23,7 @@
     "tablesorter": "jquery.tablesorter#~2.28.4",
     "jquery-confirm": "~2.7.0",
     "bootstrap-formhelpers": "~2.3.0",
-    "jquery-backstretch": "~2.1.15",
+    "jquery-backstretch": "~2.1.17",
     "jsgettext": "~0.8.1",
     "jquery.redirect": "^1.0.4",
     "open-sans-fontface": "^1.4.2",
