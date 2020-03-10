@@ -61,7 +61,7 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        npm install -g grunt-cli bower xo
+        npm install xo
         npm install --quiet
         pip install --upgrade pip tox babel mako crowdin-cli-py
     - name: Get tox workdir
