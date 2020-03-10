@@ -63,7 +63,6 @@ jobs:
       run: |
         npm install -g grunt-cli bower xo
         npm install --quiet
-        bower install --force
         pip install --upgrade pip tox babel mako crowdin-cli-py
     - name: Get tox workdir
       id: tox-workdir-path
